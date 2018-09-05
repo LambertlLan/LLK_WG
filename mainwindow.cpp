@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->hwdn = (HWND)QWidget::winId();
     connect(timer,SIGNAL(timeout()),this,SLOT(timerUpDate()));
     ui->setupUi(this);
+    QMessageBox::information(NULL, "作者提示", "本软件仅供交流,严禁用于商业用途", QMessageBox::Yes, QMessageBox::Yes);
 //    ::MoveWindow(this->hwdn,0,0,100,200,true);
 }
 

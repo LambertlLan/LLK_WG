@@ -2,6 +2,7 @@
 #define GAMEHELPER_H
 #include<windows.h>
 #include<QDebug>
+#include<QMessageBox>
 #define cout qDebug()
 class GameHelper
 {
@@ -17,6 +18,8 @@ public:
     byte chessData[11][19];//棋盘数据数组
     int nNumberX;//棋盘X轴数量
     int nNumberY;//棋盘y轴数量
+    int leftChessNum;//剩余棋子数
+    LPCVOID leftChessAddr;//剩余棋子数量基址
     GameHelper();
     GameHelper(LPCWSTR windowName);
     void GetWindowRect();
@@ -26,7 +29,9 @@ public:
     bool MatchBlockOne(POINT st1, POINT st2);
     bool MatchBlockTwo(POINT st1, POINT st2);
     void ClickChess(POINT chess);
-    void ClearChess();
+    bool ClearChess();
+    void ClearAll();
+    void GetLeftChessNum();
     ~GameHelper();
 };
 

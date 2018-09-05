@@ -10,12 +10,17 @@ GameHelper::GameHelper(){
     this->startGameBtn.y = 57;
     this->nNumberX = 19;
     this->nNumberY = 11;
+    this->leftChessNum = 0;
     this->chessBaseAddress = (LPCVOID) 0x00199F68;
+    this->leftChessAddr = (LPCVOID) 0x0019c728;
 }
 GameHelper::GameHelper(LPCWSTR windowName)
 {
     this->game_h = FindWindow(NULL,windowName);
-    this->processId = GetWindowThreadProcessId(this->game_h,&(this->processId));
+    if(!this->game_h){
+        QMessageBox::information(NULL, "系统提示", "请先打开游戏", QMessageBox::Yes, QMessageBox::Yes);
+    }
+    GetWindowThreadProcessId(this->game_h,&(this->processId));
     this->chessWidth = 31;
     this->chessHeight = 35;
     this->firstChessPoint.x = 22;
@@ -24,12 +29,15 @@ GameHelper::GameHelper(LPCWSTR windowName)
     this->startGameBtn.y = 57;
     this->nNumberX = 19;
     this->nNumberY = 11;
+    this->leftChessNum = 0;
     this->chessBaseAddress = (LPCVOID) 0x00199F68;
+    this->leftChessAddr = (LPCVOID) 0x0019c728;
     cout << "game_h = "<<game_h << " processId= "<<processId;
 }
 void GameHelper::GetWindowRect(){
     ::GetWindowRect(game_h,&(this->windowPositon));
 }
+//获取棋盘数据
 void GameHelper::GetChessData(){
     HANDLE processH = OpenProcess(PROCESS_ALL_ACCESS,false,this->processId);
     //读取进程内存数据
@@ -40,7 +48,7 @@ void GameHelper::GetChessData(){
 
 }
 int GameHelper::GetValue(POINT point){
-    return (*((PCHAR)this->chessBaseAddress + point.x +point.y * nNumberX));
+    return (*((PCHAR)this->chessData + point.x +point.y * nNumberX));
 }
 //查看两个块是否可以直连
 bool GameHelper::MatchBlock(POINT st1, POINT st2)
@@ -238,35 +246,65 @@ void GameHelper::ClickChess(POINT chess){
     SendMessage(game_h,WM_LBUTTONUP,0,(chess.y<<16)+chess.x);
 }
 //消除棋子
-void GameHelper::ClearChess(){
+bool GameHelper::ClearChess(){
     POINT st1;POINT st2;
     cout<<"nNumberY = " << nNumberY;
     //j *31+22,i*35+187
+    QString str = "";
     for(int y1 = 0;y1<nNumberY;y1++){
         for(int x1=0;x1<nNumberX;x1++){
+//            str += QString::number(chessData[y1][x1],16);
+//            str += " ";
             for(int y2 = 0;y2<nNumberY;y2++){
                 for(int x2 = 0;x2<nNumberX;x2++){
-                    if(chessData[y1][x1] == chessData[y2][x2] &&chessData[y1][x1]!=0){
+                    if(chessData[y1][x1] == chessData[y2][x2] &&chessData[y1][x1]!= 0){
                         if(x1 == x2 && y1 == y2){
-                            return;
+                            continue;
                         }
-                        st1.x = x1*31+22;
-                        st1.y = y1*35+187;
-                        st2.x = x2*31+22;
-                        st2.y = y2*35+187;
-
+                        st1.x = x1;
+                        st1.y = y1;
+                        st2.x = x2;
+                        st2.y = y2;
+//                        cout << "x1 = "<<x1<<",y1 = "<<y1;
+//                        cout << "x2 = "<<x2<<",y2 = "<<y2;
                         if(MatchBlock(st1,st2) || MatchBlockOne(st1,st2) ||MatchBlockTwo(st1,st2) ){
                             cout << "findOne";
+                            st1.x = x1*31+22;
+                            st1.y = y1*35+187;
+                            st2.x = x2*31+22;
+                            st2.y = y2*35+187;
+                            cout << "x1 = "<<x1<<",y1 = "<<y1;
+                            cout << "x2 = "<<x2<<",y2 = "<<y2;
                             ClickChess(st1);
                             ClickChess(st2);
-                            return ;
+                            return true;
                         }
 
                     }
                 }
             }
         }
+//         cout << "str = "<<str;
+//         str = "";
     }
+    return false;
+
+}
+void GameHelper::ClearAll(){
+    this->GetLeftChessNum();
+    while (this->leftChessNum>0) {
+        this->GetChessData();
+        this->ClearChess();
+        this->GetLeftChessNum();
+    }
+}
+void GameHelper::GetLeftChessNum(){
+    HANDLE processH = OpenProcess(PROCESS_ALL_ACCESS,false,this->processId);
+    //读取进程内存数据
+    DWORD byread;
+
+    ReadProcessMemory(processH,this->leftChessAddr,(LPVOID)(&(this->leftChessNum)),sizeof(byte),&byread);
+    cout << "leftChessNum = "<<this->leftChessNum;
 }
 GameHelper::~GameHelper(){
 
